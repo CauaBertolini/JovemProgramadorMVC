@@ -19,8 +19,17 @@ namespace JovemProgramadorMVC.Controllers
         }
         public IActionResult Index()
         {
-            var alunos = _alunoRepositorio.BuscarAlunos();
-            return View(alunos);
+            try
+            {
+                var alunos = _alunoRepositorio.BuscarAlunos();
+                return View(alunos);
+            }
+            catch (System.Exception)
+            {
+                TempData["MensagemErro"] = "Ocorreu um erro de conexão com o Banco de Dados, tente novamente mais tarde.";
+                return View("index");
+            }
+
         }
         public IActionResult Adicionar()
         {
@@ -29,21 +38,44 @@ namespace JovemProgramadorMVC.Controllers
 
         public IActionResult InserirAluno(AlunoModel aluno)
         {
-            _alunoRepositorio.InserirAluno(aluno);
-            return RedirectToAction("Index");
+            try
+            {
+                _alunoRepositorio.InserirAluno(aluno);
+
+                TempData["MensagemSucesso"] = "Aluno adicionado com sucesso!";
+                return RedirectToAction("Index");
+
+            }
+            catch (System.Exception)
+            {
+                TempData["MensagemErro"] = "Erro ao adicionar o aluno, tente novamente mais tarde.";
+                return RedirectToAction("Index");
+            }
+
             // Poderia ser return RedirectToAction("Index"); -> Pois redireciona para a tela na View aluno Index que é a principal
         }
 
-        public  IActionResult Editar(int id)
+        public IActionResult Editar(int id)
         {
             var aluno = _alunoRepositorio.BuscarId(id);
             return View(aluno);
+
         }
 
         public IActionResult Atualizar(AlunoModel aluno)
         {
-            _alunoRepositorio.Atualizar(aluno);
-            return RedirectToAction("Index");
+            try
+            {
+                _alunoRepositorio.Atualizar(aluno);
+                TempData["EditarSucesso"] = $"Dados do aluno {aluno.nome} editado com sucesso!";
+                return RedirectToAction("Index");
+            }
+            catch (System.Exception)
+            {
+                TempData["EditarErro"] = $"Dados do aluno {aluno.nome} editado com sucesso!";
+                return RedirectToAction("Index");
+            }
+
         }
 
         public IActionResult RemoverAluno(int id)
@@ -61,22 +93,31 @@ namespace JovemProgramadorMVC.Controllers
 
         public async Task<IActionResult> BuscarEndereco(string cep)
         {
-            cep = cep.Replace("-", "");
-
-            EnderecoModel enderecoModel = new();
-
-            using var cliente = new HttpClient();
-
-            var result = await cliente.GetAsync(_configuration.GetSection("ApiCep")["BaseUrl"] + cep + "/json");
-
-            if (result.IsSuccessStatusCode)
+            try
             {
-                enderecoModel = JsonSerializer.Deserialize<EnderecoModel>(
-                    await result.Content.ReadAsStringAsync(), new JsonSerializerOptions() { });
+                cep = cep.Replace("-", "");
 
+                EnderecoModel enderecoModel = new();
+
+                using var cliente = new HttpClient();
+
+                var result = await cliente.GetAsync(_configuration.GetSection("ApiCep")["BaseUrl"] + cep + "/json");
+
+                if (result.IsSuccessStatusCode)
+                {
+                    enderecoModel = JsonSerializer.Deserialize<EnderecoModel>(
+                        await result.Content.ReadAsStringAsync(), new JsonSerializerOptions() { });
+
+                }
+
+                return View("Endereco", enderecoModel);
+            }
+            catch (System.Exception)
+            {
+
+                throw;
             }
 
-            return View("Endereco", enderecoModel);
         }
 
 
