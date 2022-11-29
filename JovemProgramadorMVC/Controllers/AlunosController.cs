@@ -80,15 +80,20 @@ namespace JovemProgramadorMVC.Controllers
 
         public IActionResult RemoverAluno(int id)
         {
-            var aluno = _alunoRepositorio.BuscarId(id);
-            _alunoRepositorio.ExcluirAluno(aluno);
-            return RedirectToAction("Index");
-        }
+            try
+            {
+                var aluno = _alunoRepositorio.BuscarId(id);
+                _alunoRepositorio.ExcluirAluno(aluno);
+                TempData["MensagemSucesso"] = $"Aluno {aluno.nome} excluído com sucesso.";
+                return RedirectToAction("Index");
 
-        public IActionResult ExcluirAluno(AlunoModel aluno)
-        {
-            _alunoRepositorio.ExcluirAluno(aluno);
-            return RedirectToAction("Index");
+            }
+            catch (System.Exception)
+            {
+                TempData["MensagemErro"] = "Erro ao tentar excluir aluno, tente novamente mais tarde.";
+                return RedirectToAction("Index");
+            }
+
         }
 
         public async Task<IActionResult> BuscarEndereco(string cep)
